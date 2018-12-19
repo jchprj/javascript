@@ -7648,7 +7648,7 @@
                     this.isActive = true;
 
                     window.document.addEventListener('mousemove', this._onMouseMove, true);
-                    window.removeEventListener('keydown', this._onKeyDown, false);
+                    // window.removeEventListener('keydown', this._onKeyDown, false);
 
                     this.renderer.on('postrender', this.update, this);
 
@@ -7722,7 +7722,7 @@
                     if (!this.renderer.renderingToScreen) {
                         return;
                     }
-
+                    // console.log(this.renderer._lastObjectRendered);
                     // update children...
                     this.updateAccessibleObjects(this.renderer._lastObjectRendered);
 
@@ -7938,13 +7938,65 @@
                  * @param {KeyboardEvent} e - The keydown event.
                  */
 
+                var KEYMAPPING = {
+                    '37': 'left',
+                    '38': 'up',
+                    '39': 'right',
+                    '40': 'down'
+                };
+                var lastAccessibleIndex = -1;
 
+                function getCurrentFocusedElement() {
+                    var activeElement = document.activeElement;
+                    if (activeElement && activeElement !== document.body) {
+                        return activeElement;
+                    }
+                }
                 AccessibilityManager.prototype._onKeyDown = function _onKeyDown(e) {
                     console.log("kkk " + e.keyCode);
-                    if (e.keyCode !== 81) {
+                    var direction = KEYMAPPING[e.keyCode];
+                    if (!direction) {
+                        if (e.keyCode == 13) {}
+                    }
+                    if (!direction && e.keyCode !== 81) {
+                        return;
+                    }
+                    if (
+                        e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) {
                         return;
                     }
 
+                    var preventDefault = function() {
+                        evt.preventDefault();
+                        evt.stopPropagation();
+                        return false;
+                    };
+
+                    var currentFocusedElement = getCurrentFocusedElement();
+                    console.log(currentFocusedElement);
+                    if (!currentFocusedElement) {
+                        // focusSection();
+                        // return preventDefault();
+                    }
+
+                    if (this.children.length > 0) {
+                        if (direction == 'up') {
+                            lastAccessibleIndex++;
+                            if (lastAccessibleIndex > this.children.length - 1) {
+                                lastAccessibleIndex = 0;
+                            }
+                        } else if (direction == 'down') {
+                            lastAccessibleIndex--;
+                            if (lastAccessibleIndex < 0) {
+                                lastAccessibleIndex = this.children.length - 1;
+                            }
+                        }
+                        this.children[lastAccessibleIndex]._accessibleDiv.focus();
+                    }
+                    console.log(this.children.length);
+                    if (this.isActive) {
+                        return;
+                    }
                     this.activate();
                 };
 
